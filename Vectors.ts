@@ -21,7 +21,12 @@ namespace Vectors {
         norm(): number {
             return Math.sqrt(this.normSq())
         }
-
+        copy(v: Vector) {
+            this.x = v.x;
+            this.y = v.y;
+            this.z = v.z;
+            return this;
+        }
         set(x: number, y: number, z: number) {
             this.x = x;
             this.y = y;
@@ -69,23 +74,26 @@ namespace Vectors {
             this.x += v.x;
             this.y += v.y;
             this.z += v.z;
+            return this;
         }
 
         isub(v: Vector) {
             this.x -= v.x;
             this.y -= v.y;
             this.z -= v.z;
+            return this;
         }
 
         imult(s: number) {
             this.x *= s;
             this.y *= s;
             this.z *= s;
-        
+            return this;
         }
 
         izero() {
             this.x = this.y = this.z = 0;
+            return this;
         }
 
         free() {
@@ -124,17 +132,6 @@ namespace Vectors {
             this.allocated.push(v);
         }
 
-        // static getVector(): Vector {
-        //     if (VectorPool.allocated.length===0) {
-        //         VectorPool.allocated.push(new Vector());
-        //         VectorPool.counter++;
-        //     }
-        //     var v = VectorPool.allocated.pop()
-        //     VectorPool.requested.push(v);
-        //     v.izero();
-        //     return v;
-            
-        // }
 
         static getVector(): Vector;
         static getVector(n: number): Vector[];
@@ -157,19 +154,72 @@ namespace Vectors {
             }
         }
 
-        // private static pools: Vector[][] = [];
-        // static getPool(): Vector[] {
-        //     if (VectorPool.pools.length === 0) {
-        //         VectorPool.pools.push([])
-        //     return [];
-        //     }
-        // }
+    }
 
-}
+    //---------------------------------------------------
+    export class VPool {
+        public static counter: number = 0;
+        private allocated: Vector[] = [];
+        private requested: Vector[] = [];
+        
+        constructor() {}
+
+        collect() {
+            var v: Vector;
+            while (this.requested.length > 0) {
+                v = this.requested.pop();
+                this.allocated.push(v);
+            }
+        }
+
+        getVector(): Vector;
+        getVector(n: number): Vector[];
+        getVector(n?: number): any {
+            if (n) {
+                var vs: Vector[] = [];
+                while ((n--) > 0)
+                    vs.push(VectorPool.getVector());
+                return vs;
+            }
+            else {
+                if (this.allocated.length===0) {
+                    this.allocated.push(new Vector());
+                    VPool.counter++;
+                }
+                var v = this.allocated.pop()
+                this.requested.push(v);
+                v.izero();
+                return v;
+            }
+        }
+
+        free() {
+            Pool.uptake(this);
+        }
+    }
 
 
+    export class Pool {
+        private static counter: number = 0;
+        private static allocated: VPool[] = [];
+        private static requested: VPool[] = [];
+        
+        constructor() {}
 
+        static uptake(v: VPool) {
+            var i = Pool.requested.indexOf(v);
+            Pool.requested.splice(i);
+            Pool.allocated.push(v);
+        }
 
-
-
+        static getVPool(): VPool {
+            if (Pool.allocated.length===0) {
+                Pool.allocated.push(new VPool());
+                Pool.counter++;
+            }
+            var v = Pool.allocated.pop();
+            Pool.requested.push(v);
+            return v;
+        }
+    }
 }

@@ -23,6 +23,12 @@ var Vectors;
         Vector.prototype.norm = function () {
             return Math.sqrt(this.normSq());
         };
+        Vector.prototype.copy = function (v) {
+            this.x = v.x;
+            this.y = v.y;
+            this.z = v.z;
+            return this;
+        };
         Vector.prototype.set = function (x, y, z) {
             this.x = x;
             this.y = y;
@@ -57,19 +63,23 @@ var Vectors;
             this.x += v.x;
             this.y += v.y;
             this.z += v.z;
+            return this;
         };
         Vector.prototype.isub = function (v) {
             this.x -= v.x;
             this.y -= v.y;
             this.z -= v.z;
+            return this;
         };
         Vector.prototype.imult = function (s) {
             this.x *= s;
             this.y *= s;
             this.z *= s;
+            return this;
         };
         Vector.prototype.izero = function () {
             this.x = this.y = this.z = 0;
+            return this;
         };
         Vector.prototype.free = function () {
             VectorPool.uptake(this);
@@ -123,6 +133,67 @@ var Vectors;
     VectorPool.allocated = [];
     VectorPool.requested = [];
     Vectors.VectorPool = VectorPool;
+    //---------------------------------------------------
+    var VPool = (function () {
+        function VPool() {
+            this.allocated = [];
+            this.requested = [];
+        }
+        VPool.prototype.collect = function () {
+            var v;
+            while (this.requested.length > 0) {
+                v = this.requested.pop();
+                this.allocated.push(v);
+            }
+        };
+        VPool.prototype.getVector = function (n) {
+            if (n) {
+                var vs = [];
+                while ((n--) > 0)
+                    vs.push(VectorPool.getVector());
+                return vs;
+            }
+            else {
+                if (this.allocated.length === 0) {
+                    this.allocated.push(new Vector());
+                    VPool.counter++;
+                }
+                var v = this.allocated.pop();
+                this.requested.push(v);
+                v.izero();
+                return v;
+            }
+        };
+        VPool.prototype.free = function () {
+            Pool.uptake(this);
+        };
+        return VPool;
+    }());
+    VPool.counter = 0;
+    Vectors.VPool = VPool;
+    var Pool = (function () {
+        function Pool() {
+        }
+        Pool.uptake = function (v) {
+            var i = Pool.requested.indexOf(v);
+            Pool.requested.splice(i);
+            Pool.allocated.push(v);
+        };
+        Pool.getVPool = function () {
+            if (Pool.allocated.length === 0) {
+                Pool.allocated.push(new VPool());
+                Pool.counter++;
+            }
+            var v = Pool.allocated.pop();
+            Pool.requested.push(v);
+            return v;
+        };
+        return Pool;
+    }());
+    Pool.counter = 0;
+    Pool.allocated = [];
+    Pool.requested = [];
+    Vectors.Pool = Pool;
 })(Vectors || (Vectors = {}));
 /// <reference path="Vectors.ts" />
 var Vector = Vectors.Vector;
@@ -641,6 +712,7 @@ var Driver;
         function LeapfrogIntegrator(params) {
             this.nsteps = params.nsteps;
             this.timestep = params.dt;
+            this.momRemover = new MomentumRemover({ removeLinear: true, removeAngular: true, freq: 10 });
         }
         LeapfrogIntegrator.prototype.setCallback = function (fcn, callfreq) {
             this.callback = fcn;
@@ -656,19 +728,17 @@ var Driver;
             var Ndf = system.countDegreesOfFreedom();
             var velocities = system.getVelocities();
             var coords = system.getCoordinates();
-            var forces = system.getForces();
             var Natoms = system.getAtomCount();
             var vtmp = VectorPool.getVector();
+            var forces = system.getForces();
             var instantTemp;
             var halfdtOverMass = masses.map(function (m) { return 0.5 * _this.timestep / m; });
-            var forces_t = forces.map(function (v) { return VectorPool.getVector(); });
-            var step = 0;
+            var forces_t = VectorPool.getVector(Natoms);
             var energy = system.eval(coords, forces);
             instantTemp = this.thermostat.getInstantTemperature(velocities, masses, Ndf);
-            // console.log(step, energy, instantTemp);
             var vcom = VectorPool.getVector();
-            var momRemover = new MomentumRemover({ removeLinear: true, removeAngular: true, freq: 10 });
-            while ((step++) < this.nsteps) {
+            var step = -1;
+            while ((++step) < this.nsteps) {
                 // temperature and pressure scaling
                 this.thermostat.update(velocities, instantTemp);
                 // integrate equations of motion (Verlet velocity)
@@ -677,13 +747,11 @@ var Driver;
                     vtmp.iadd(velocities[i]); // tmp += v_i
                     vtmp.imult(this.timestep);
                     coords[i].iadd(vtmp);
-                    forces_t[i].set(forces[i].x, forces[i].y, forces[i].z);
+                    // forces_t[i].set(forces[i].x, forces[i].y, forces[i].z);
+                    forces_t[i].copy(forces[i]);
                 }
                 // calculate forces at t+dt
                 energy = system.eval(coords, forces);
-                // Ekin = this.getKineticEnergy(masses, velocities);
-                // instantTemp = 2.0*Ekin/(boltzman*Ndf);
-                //instantTemp = this.thermostat.getInstantTemperature(velocities,masses,Ndf);
                 // update velocities
                 for (var i = 0; i < Natoms; i++) {
                     Vector.oadd(forces_t[i], forces[i], vtmp);
@@ -692,19 +760,12 @@ var Driver;
                 }
                 instantTemp = this.thermostat.getInstantTemperature(velocities, masses, Ndf);
                 // remove linear/angular momentum
-                if (momRemover && (step % 10 == 0)) {
-                    // vcom.izero();
-                    // velocities.forEach((vel, i) => {
-                    //   Vector.omult(vel, masses[i], vtmp);
-                    //   vcom.iadd(vtmp);
-                    // });
-                    // vcom.imult(1.0/totalMass);
-                    // velocities.forEach(v => v.isub(vcom));
-                    momRemover.apply(coords, velocities, masses);
+                if (this.momRemover && (step % 20 == 0)) {
+                    this.momRemover.apply(coords, velocities, masses);
                 }
-                if (this.callback && (step % this.callbackfreq == 0)) {
-                    this.callback(system, step);
-                }
+            }
+            if (this.callback) {
+                this.callback(system, step);
             }
             VectorPool.collect();
             return -1;
@@ -718,6 +779,63 @@ var Driver;
             this.removeLinear = prm.removeLinear;
             this.freq = prm.freq;
         }
+        // apply(xyz: Vector[], vel: Vector[], masses: number[]) {
+        //   var vpool: Vectors.VPool = Vectors.Pool.getVPool();
+        //   var p0: Vector = vpool.getVector();    // single particle linear momentum
+        //   var j0: Vector = vpool.getVector();    // single particle angular momentum
+        //   var gj: Vector = vpool.getVector();    // group angular momentum
+        //   var gx: Vector = vpool.getVector();    // group center of mass
+        //   var gv: Vector = vpool.getVector();    // group velocity
+        //   var gp: Vector = vpool.getVector();    // group linear momentum
+        //   var gw: Vector = vpool.getVector();    // group angular velocity
+        //   var dx: Vector = vpool.getVector();    // single particle's change in position
+        //   var dv: Vector = vpool.getVector();    // single particle's change in velocity
+        //   var gi: Vector[] = vpool.getVector(3); // group inertia tensor //[VectorPool.getVector(),VectorPool.getVector(),VectorPool.getVector()];
+        //   var Icm:Vector[] = vpool.getVector(3); // group inertia tensor //[VectorPool.getVector(),VectorPool.getVector(),VectorPool.getVector()];
+        //   var nAtoms = xyz.length;
+        //   var m0: number;
+        //   for (var i=0; i<nAtoms; i++) {
+        //     m0 = masses[i];
+        //     // linear momentum
+        //     Vector.omult(vel[i], m0, p0);
+        //     gp.iadd(p0);
+        //     // angular momentum
+        //     Vector.ocross(xyz[i], vel[i], j0);
+        //     j0.imult(m0);
+        //     gj.iadd(j0);
+        //     gx.set(gx.x + m0*xyz[i].x, gx.y + m0*xyz[i].y, gx.z + m0*xyz[i].z);
+        //     this.update_tensor(xyz[i], m0, gi);
+        //   }
+        //   var M = masses.reduce((a, b) => a + b, 0);
+        //   Vector.omult(gp, 1.0/M, gv);
+        //   // calculate group center of mass
+        //   gx.imult(1.0/M);
+        //   // Subtract the center of mass contribution to the angular momentum
+        //   var jcm: Vector = VectorPool.getVector();
+        //   Vector.ocross(gx, gv, jcm);
+        //   jcm.imult(M);
+        //   gj.isub(jcm);
+        //   // Subtract the center of mass contribution from the inertia tensor
+        //   this.update_tensor(gx, M, Icm);
+        //   for(var i=0; i<3; i++)
+        //     gi[i].isub(Icm[i]);
+        //   /* Compute angular velocity, using matrix operation 
+        //   * Since J = I w
+        //   * we have
+        //   * w = I^-1 J
+        //   */
+        //   this.get_minv(gi,Icm);
+        //   gw.set(Icm[0].dot(gj), Icm[1].dot(gj), Icm[2].dot(gj));
+        //   /* Compute the correction to the velocity for each atom */
+        //   for (var i=0; i<nAtoms; i++) {
+        //     vel[i].isub(gv);
+        //     Vector.osub(xyz[i], gx, dx);
+        //     Vector.ocross(gw, dx, dv);
+        //     vel[i].isub(dv);
+        //   }
+        //   vpool.collect();  // collect all vectors from this pool
+        //   vpool.free();     // release this pool
+        // }
         MomentumRemover.prototype.apply = function (xyz, vel, masses) {
             var p0 = VectorPool.getVector(); // single particle linear momentum
             var j0 = VectorPool.getVector(); // single particle angular momentum

@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "sourceMap":  true
+    },
+    "include": [
+        "*.ts"
+    ],
+    "exclude": [
+        "*.js",
+        "main.ts"
+    ]
+}

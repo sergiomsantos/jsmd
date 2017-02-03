@@ -4,5 +4,5 @@
 rm -f dat/tmp.xyz 
 #tsc --outFile ff.js *.ts
 
-tsc --target ES3 --outFile ff.js --project .
-
+#tsc --target ES3 --outFile ff.js --project .
+tsc -p .

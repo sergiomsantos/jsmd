@@ -1,12 +1,18 @@
 {
     "compilerOptions": {
         "sourceMap":  true
+        , "removeComments": true
+        , "target": "ES3"
+        , "outDir": "bin"
+        // , "module": "commonjs"
+        , "outFile": "ff.js"
     },
     "include": [
         "*.ts"
     ],
     "exclude": [
-        "*.js",
-        "main.ts"
+        "*.js"
+        // , "*.c"
+        , "main.ts"
     ]
 }

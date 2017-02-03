@@ -53,8 +53,9 @@ namespace Driver {
 
       var energy = system.eval(coords, forces);
       instantTemp = this.thermostat.getInstantTemperature(velocities,masses,Ndf);
-      var vcom = VectorPool.getVector();
-
+      // var vcom = VectorPool.getVector();
+      // this.momRemover.apply(coords, velocities, masses);
+      // this.momRemover.apply(coords, velocities, masses);
       
       var step = -1;
       while ((++step) < this.nsteps) {
@@ -69,7 +70,6 @@ namespace Driver {
           vtmp.iadd(velocities[i]);  // tmp += v_i
           vtmp.imult(this.timestep);
           coords[i].iadd(vtmp);
-          // forces_t[i].set(forces[i].x, forces[i].y, forces[i].z);
           forces_t[i].copy(forces[i]);
         }
 
@@ -87,7 +87,7 @@ namespace Driver {
         
         // remove linear/angular momentum
         if (this.momRemover && (step%20 == 0)) {
-          this.momRemover.apply(coords, velocities, masses);
+          this.momRemover.remove(coords, velocities, masses);
         }
 
         // if (this.callback && (step%this.callbackfreq == 0)) {
@@ -101,7 +101,11 @@ namespace Driver {
         this.callback(system, step);
       }
 
-      VectorPool.collect();
+      vtmp.free();
+      while (forces_t.length > 0)
+        forces_t.pop().free();
+      
+      // VectorPool.collect();
       return -1;
     }
     
@@ -189,11 +193,12 @@ namespace Driver {
     //   vpool.free();     // release this pool
     // }
 
-    apply(xyz: Vector[], vel: Vector[], masses: number[]) {
+    remove(xyz: Vector[], vel: Vector[], masses: number[]) {
       var p0: Vector = VectorPool.getVector();    // single particle linear momentum
       var j0: Vector = VectorPool.getVector();    // single particle angular momentum
       var gj: Vector = VectorPool.getVector();    // group angular momentum
       var gx: Vector = VectorPool.getVector();    // group center of mass
+      // var x0: Vector = VectorPool.getVector();    // group center of mass
       var gv: Vector = VectorPool.getVector();    // group velocity
       var gp: Vector = VectorPool.getVector();    // group linear momentum
       var gw: Vector = VectorPool.getVector();    // group angular velocity
@@ -204,9 +209,10 @@ namespace Driver {
       
       var nAtoms = xyz.length;
       var m0: number;
-
+      var M: number = 0.0;
       for (var i=0; i<nAtoms; i++) {
         m0 = masses[i];
+        M += m0;
         // linear momentum
         Vector.omult(vel[i], m0, p0);
         gp.iadd(p0);
@@ -215,11 +221,15 @@ namespace Driver {
         Vector.ocross(xyz[i], vel[i], j0);
         j0.imult(m0);
         gj.iadd(j0);
+
+        // x0.copy(xyz[i]);
+        // x0.imult(m0);
+        // gx.iadd(x0);
         gx.set(gx.x + m0*xyz[i].x, gx.y + m0*xyz[i].y, gx.z + m0*xyz[i].z);
         this.update_tensor(xyz[i], m0, gi);
       }
       
-      var M = masses.reduce((a, b) => a + b, 0);
+      // var M = masses.reduce((a, b) => a + b, 0);
       Vector.omult(gp, 1.0/M, gv);
 
       // calculate group center of mass
@@ -233,8 +243,11 @@ namespace Driver {
 
       // Subtract the center of mass contribution from the inertia tensor
       this.update_tensor(gx, M, Icm);
-      for(var i=0; i<3; i++)
-        gi[i].isub(Icm[i]);
+      // for(var i=0; i<3; i++)
+        // gi[i].isub(Icm[i]);
+      gi[0].isub(Icm[0]);
+      gi[1].isub(Icm[1]);
+      gi[2].isub(Icm[2]);
 
       /* Compute angular velocity, using matrix operation 
       * Since J = I w
@@ -243,13 +256,14 @@ namespace Driver {
       */
       this.get_minv(gi,Icm);
       gw.set(Icm[0].dot(gj), Icm[1].dot(gj), Icm[2].dot(gj));
-
+      // console.log("------------",Icm);
       /* Compute the correction to the velocity for each atom */
       for (var i=0; i<nAtoms; i++) {
         vel[i].isub(gv);
         Vector.osub(xyz[i], gx, dx);
         Vector.ocross(gw, dx, dv);
         vel[i].isub(dv);
+        // console.log(dv);
       }
 
 
@@ -257,6 +271,7 @@ namespace Driver {
       j0.free();
       gj.free();
       gx.free();
+      // x0.free();
       gv.free();
       gp.free();
       gw.free();

@@ -33,7 +33,7 @@ var notify = function(data: string) {
 
 
 var mm = new MolecularMechanics.System();
-mm.loadParamsFromJSON(params);
+mm.loadParamsFromJSON(JSON.parse(params));
 
 var ab: string[] = fs.readFileSync('params/ab.xyz', 'utf8').split('\n');
 //console.log(ab);
@@ -78,12 +78,12 @@ var asXYZ = function(system: MolecularMechanics.System, coords: Vectors.Vector[]
 // console.log('number of allocated vectors:',VectorPool.counter);
 
 var fcn = function(system: MolecularMechanics.System, fx: number) {
-  //console.log(fx);
+  console.log(fx);
   notify(asXYZ(system, system.getCoordinates()));
 }
 
 
-var integrator = new Driver.LeapfrogIntegrator({dt: 0.001, nsteps: 100000});
+var integrator = new Driver.LeapfrogIntegrator({dt: 0.001, nsteps: 10000});
 //var thermostat = new Thermostat.Berendsen({temperature:300, tcoupl: 0.5, dt:0.0001});
 var thermostat = new Thermostat.VRescale({temperature:300});
 integrator.setCallback(fcn,100);
@@ -95,9 +95,9 @@ console.log(Ti);
 integrator.run(mm);
 
 
-client.methodCall('load', [fname, 'molecule'], function (error, value) {
- console.log('Method response for \'cmd.load\': ' + value)
-});
+// client.methodCall('load', [fname, 'molecule'], function (error, value) {
+//  console.log('Method response for \'cmd.load\': ' + value)
+// });
 
 
 console.log('number of allocated vectors:',VectorPool.counter);

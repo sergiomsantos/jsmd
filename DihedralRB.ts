@@ -75,8 +75,17 @@ namespace ForceField {
                     forces[dihd.a4].iadd(f4);
                 }
             });
-
-            VectorPool.collect();
+            v12.free();
+            v32.free();
+            v34.free();
+            tmp.free();
+            f1.free();
+            f2.free();
+            f3.free();
+            f4.free();
+            M.free();
+            N.free();
+            // VectorPool.collect();
             return energy;
         }
     }

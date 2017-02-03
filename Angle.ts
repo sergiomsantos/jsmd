@@ -53,8 +53,11 @@ namespace ForceField {
                 }
                 energy += angle.kf * dtheta * dtheta;
             });
-            
-            VectorPool.collect();
+            v12.free();
+            v32.free();
+            f1.free();
+            f3.free();
+            // VectorPool.collect();
             return 0.5*energy;
         }
     }

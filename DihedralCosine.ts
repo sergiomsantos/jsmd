@@ -64,7 +64,18 @@ namespace ForceField {
                 }
                 energy += dihd.kf * (1.0 + Math.cos(dihd.pn*phi - dihd.ph));
             });
-            VectorPool.collect();
+
+            v12.free();
+            v32.free();
+            v34.free();
+            tmp.free();
+            M.free();
+            N.free();
+            f1.free();
+            f2.free();
+            f3.free();
+            f4.free();
+            // VectorPool.collect();
             return energy;
         }
     }

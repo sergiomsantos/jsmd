@@ -57,9 +57,9 @@
     }
     step += e.data.step;
     document.getElementById('status').textContent = step;
-    if (step < 5000000)
+    if (step < 250000)
       worker.postMessage({cmd:'continue'});
-    console.log(e.data.n);
+    // console.log(e.data.n);
   }, false);
 
 

@@ -86,8 +86,8 @@ namespace ForceField {
                     EnergyVDW += Evdw;
                 }
             }
-
-            VectorPool.collect();
+            vij.free();
+            // VectorPool.collect();
             return {coulomb: EnergyCoul, vdw: EnergyVDW};
         }
     }

@@ -31,7 +31,8 @@ namespace ForceField {
                 energy += bond.kf * dr * dr;
             });
 
-            VectorPool.collect();
+            v12.free();
+            // VectorPool.collect();
             return 0.5*energy;
         }
 

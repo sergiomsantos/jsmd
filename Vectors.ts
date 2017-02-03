@@ -146,6 +146,8 @@ namespace Vectors {
                 if (VectorPool.allocated.length===0) {
                     VectorPool.allocated.push(new Vector());
                     VectorPool.counter++;
+                    // console.log("allocating new vector");
+                    
                 }
                 var v = VectorPool.allocated.pop()
                 VectorPool.requested.push(v);
@@ -157,69 +159,69 @@ namespace Vectors {
     }
 
     //---------------------------------------------------
-    export class VPool {
-        public static counter: number = 0;
-        private allocated: Vector[] = [];
-        private requested: Vector[] = [];
+    // export class VPool {
+    //     public static counter: number = 0;
+    //     private allocated: Vector[] = [];
+    //     private requested: Vector[] = [];
         
-        constructor() {}
+    //     constructor() {}
 
-        collect() {
-            var v: Vector;
-            while (this.requested.length > 0) {
-                v = this.requested.pop();
-                this.allocated.push(v);
-            }
-        }
+    //     collect() {
+    //         var v: Vector;
+    //         while (this.requested.length > 0) {
+    //             v = this.requested.pop();
+    //             this.allocated.push(v);
+    //         }
+    //     }
 
-        getVector(): Vector;
-        getVector(n: number): Vector[];
-        getVector(n?: number): any {
-            if (n) {
-                var vs: Vector[] = [];
-                while ((n--) > 0)
-                    vs.push(VectorPool.getVector());
-                return vs;
-            }
-            else {
-                if (this.allocated.length===0) {
-                    this.allocated.push(new Vector());
-                    VPool.counter++;
-                }
-                var v = this.allocated.pop()
-                this.requested.push(v);
-                v.izero();
-                return v;
-            }
-        }
+    //     getVector(): Vector;
+    //     getVector(n: number): Vector[];
+    //     getVector(n?: number): any {
+    //         if (n) {
+    //             var vs: Vector[] = [];
+    //             while ((n--) > 0)
+    //                 vs.push(VectorPool.getVector());
+    //             return vs;
+    //         }
+    //         else {
+    //             if (this.allocated.length===0) {
+    //                 this.allocated.push(new Vector());
+    //                 VPool.counter++;
+    //             }
+    //             var v = this.allocated.pop()
+    //             this.requested.push(v);
+    //             v.izero();
+    //             return v;
+    //         }
+    //     }
 
-        free() {
-            Pool.uptake(this);
-        }
-    }
+    //     free() {
+    //         Pool.uptake(this);
+    //     }
+    // }
 
 
-    export class Pool {
-        private static counter: number = 0;
-        private static allocated: VPool[] = [];
-        private static requested: VPool[] = [];
+    // export class Pool {
+    //     private static counter: number = 0;
+    //     private static allocated: VPool[] = [];
+    //     private static requested: VPool[] = [];
         
-        constructor() {}
+    //     constructor() {}
 
-        static uptake(v: VPool) {
-            var i = Pool.requested.indexOf(v);
-            Pool.requested.splice(i);
-            Pool.allocated.push(v);
-        }
+    //     static uptake(v: VPool) {
+    //         var i = Pool.requested.indexOf(v);
+    //         Pool.requested.splice(i);
+    //         Pool.allocated.push(v);
+    //     }
 
-        static getVPool(): VPool {
-            if (Pool.allocated.length===0) {
-                Pool.allocated.push(new VPool());
-                Pool.counter++;
-            }
-            var v = Pool.allocated.pop();
-            Pool.requested.push(v);
-            return v;
-        }
-    }
+    //     static getVPool(): VPool {
+    //         if (Pool.allocated.length===0) {
+    //             Pool.allocated.push(new VPool());
+    //             Pool.counter++;
+    //         }
+    //         var v = Pool.allocated.pop();
+    //         Pool.requested.push(v);
+    //         return v;
+    //     }
+    // }
 }

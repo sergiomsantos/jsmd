@@ -1,4 +1,4 @@
-importScripts('ff.js');
+importScripts('build/jsmd.js');
 
 var doContinue = true;
 

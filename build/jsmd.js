@@ -704,7 +704,6 @@ var Driver;
             var j0 = VectorPool.getVector();
             var gj = VectorPool.getVector();
             var gx = VectorPool.getVector();
-            var x0 = VectorPool.getVector();
             var gv = VectorPool.getVector();
             var gp = VectorPool.getVector();
             var gw = VectorPool.getVector();
@@ -748,7 +747,6 @@ var Driver;
             j0.free();
             gj.free();
             gx.free();
-            x0.free();
             gv.free();
             gp.free();
             gw.free();
@@ -858,4 +856,4 @@ var Driver;
     }());
     Driver.SteepestDescent = SteepestDescent;
 })(Driver || (Driver = {}));
-//# sourceMappingURL=ff.js.map
+//# sourceMappingURL=jsmd.js.map

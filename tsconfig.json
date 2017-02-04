@@ -3,16 +3,12 @@
         "sourceMap":  true
         , "removeComments": true
         , "target": "ES3"
-        , "outDir": "bin"
-        // , "module": "commonjs"
-        , "outFile": "ff.js"
+        , "outFile": "build/jsmd.js"
     },
     "include": [
-        "*.ts"
+        "src/**/*.ts"
     ],
     "exclude": [
-        "*.js"
-        // , "*.c"
-        , "main.ts"
+        "src/main.ts"
     ]
 }

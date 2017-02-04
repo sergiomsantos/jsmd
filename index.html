@@ -1,9 +1,9 @@
 <html>
 <head>
   <meta http-equiv="X-UA-Compatible" content="chrome=1">
-  <link rel="stylesheet" href="libs/ChemDoodleWeb-7.0.2/install/ChemDoodleWeb.css" type="text/css">
-  <script type="text/javascript" src="libs/ChemDoodleWeb-7.0.2/install/ChemDoodleWeb.js"></script>
-  <script type="text/javascript" src="ff.js"></script>
+  <link rel="stylesheet" href="https://hub.chemdoodle.com/cwc/latest/ChemDoodleWeb.css" type="text/css">
+  <script type="text/javascript" src="https://hub.chemdoodle.com/cwc/latest/ChemDoodleWeb.js"></script>
+  <!-- <script type="text/javascript" src="build/jsmd.js"></script> -->
 </head>
 
 <body>
@@ -12,36 +12,21 @@
   <output id="status"></output>
 
   <script>
+  
   var transformBallAndStick = new ChemDoodle.TransformCanvas3D('transformBallAndStick', 500, 500);
   transformBallAndStick.specs.set3DRepresentation('Stick');
   transformBallAndStick.specs.backgroundColor = 'white';
-  //var molFile = '  3\n Title\nC 0.0 0.0 0.0\nC 1.5 0.0 0.0\nC 1.5 1.5 0.0\n';
   var molFile = '15\nFrame 0\nN           1.988000    3.489000    0.941000\nC           3.168000    4.142000    1.181000\nC           4.140000    3.183000    1.111000\nN           3.586000    1.932000    0.979000\nC           2.271000    2.147000    0.865000\nH           1.170000    3.922000    0.533000\nC           5.461000    3.403000    1.785000\nH           5.757000    4.452000    1.718000\nH           6.240000    2.799000    1.314000\nH           5.408000    3.130000    2.841000\nC           3.456000    5.528000    0.687000\nH           2.548000    5.997000    0.300000\nH           4.198000    5.506000   -0.114000\nH           3.844000    6.152000    1.494000\nH           1.503000    1.393000    0.951000\n';
   var molecule = ChemDoodle.readXYZ(molFile, 1);
   transformBallAndStick.loadMolecule(molecule);
 
-  // var transformBallAndStick = new ChemDoodle.TransformCanvas('transformer', 500, 500, true);
-  // transformBallAndStick.specs.atoms_useJMOLColors = true;
-  // transformBallAndStick.specs.atoms_circles_2D = true;
-  // transformBallAndStick.specs.bonds_symmetrical_2D = true;
-  // transformBallAndStick.specs.backgroundColor = 'white';
-  // var molFile = '  3\n Title\nC 0.0 0.0 0.0\nC 1.5 0.0 0.0\nC 1.5 1.5 0.0\n';
-  // var molecule = ChemDoodle.readXYZ(molFile, 1);
-  // transformBallAndStick.loadMolecule(molecule);
-
-
   function start() {
-    //sd.run(mm);
-    // integrator.run(mm);
-    worker.postMessage({cmd:'start'});//, mol: molecule});
+    worker.postMessage({cmd:'start'});
   }
   
   function stop() {
-    //sd.run(mm);
-    // integrator.run(mm);
-    worker.postMessage({cmd:'stop'});//, mol: molecule});
+    worker.postMessage({cmd:'stop'});
   }
-  
   
   var step = 0;
   var worker = new Worker('doWork.js');
@@ -61,69 +46,6 @@
       worker.postMessage({cmd:'continue'});
     // console.log(e.data.n);
   }, false);
-
-
-
-
-
-
-// var ffield = {
-//   atoms: 
-//    [ { charge: -0.507192,
-//        epsilon: 0.71128,
-//        id: 1,
-//        name: 'N1',
-//        sigma: 3.25 },
-//      { charge: -0.507192,
-//        epsilon: 0.71128,
-//        id: 2,
-//        name: 'N2',
-//        sigma: 3.25 },
-//      { charge: -0.507192,
-//        epsilon: 0.71128,
-//        id: 3,
-//        name: 'N3',
-//        sigma: 3.25 } ],
-//   bonds: 
-//    [ { a1: 0, a2: 1, kf: 3671.9, r0: 1.371 },
-//      { a1: 1, a2: 2, kf: 3671.9, r0: 1.371 },
-//      { a1: 2, a2: 0, kf: 3671.9, r0: 1.371 } ] }
-
-// var mm = new MolecularMechanics.System();
-
-// mm.loadParamsFromJSON(ffield);
-
-// mm.loadState({
-//   coords: [
-//     [0.0, 0.0, 0.0],
-//     [1.5, 0.0, 0.0],
-//     [1.5, 1.5, 0.0]
-//     ]
-// });
-
-// var fcn = function(sys, step) {
-//   var crd = sys.getCoordinates();
-//   crd.forEach(function(x,i) {
-//     molecule.atoms[i].x = x.x;
-//     molecule.atoms[i].y = x.y;
-//     molecule.atoms[i].z = x.z;
-//   });
-//   transformBallAndStick.repaint();
-// }
-
-
-// var integrator = new Driver.LeapfrogIntegrator({dt: 0.001, nsteps: 100000});
-// //var thermostat = new Thermostat.Berendsen({temperature:300, tcoupl: 0.5, dt:0.0001});
-// var thermostat = new Thermostat.VRescale({temperature:300});
-// // integrator.setCallback(fcn,100);
-// integrator.setThermostat(thermostat);
-// thermostat.assignVelocities(mm);
-// // var Ti = thermostat.getInstantTemperature(mm.getVelocities(), mm.getAtoms().map(m=>m.mass), mm.countDegreesOfFreedom());
-
-
-// var sd = new Driver.SteepestDescent();
-// sd.setCallback(fcn);
-// // sd.run(mm);
 
   </script>
 </body>

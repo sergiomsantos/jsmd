@@ -53,9 +53,6 @@ namespace Driver {
 
       var energy = system.eval(coords, forces);
       instantTemp = this.thermostat.getInstantTemperature(velocities,masses,Ndf);
-      // var vcom = VectorPool.getVector();
-      // this.momRemover.apply(coords, velocities, masses);
-      // this.momRemover.apply(coords, velocities, masses);
       
       var step = -1;
       while ((++step) < this.nsteps) {
@@ -124,74 +121,6 @@ namespace Driver {
       this.removeLinear = prm.removeLinear;
       this.freq = prm.freq;
     }
-
-    // apply(xyz: Vector[], vel: Vector[], masses: number[]) {
-    //   var vpool: Vectors.VPool = Vectors.Pool.getVPool();
-    //   var p0: Vector = vpool.getVector();    // single particle linear momentum
-    //   var j0: Vector = vpool.getVector();    // single particle angular momentum
-    //   var gj: Vector = vpool.getVector();    // group angular momentum
-    //   var gx: Vector = vpool.getVector();    // group center of mass
-    //   var gv: Vector = vpool.getVector();    // group velocity
-    //   var gp: Vector = vpool.getVector();    // group linear momentum
-    //   var gw: Vector = vpool.getVector();    // group angular velocity
-    //   var dx: Vector = vpool.getVector();    // single particle's change in position
-    //   var dv: Vector = vpool.getVector();    // single particle's change in velocity
-    //   var gi: Vector[] = vpool.getVector(3); // group inertia tensor //[VectorPool.getVector(),VectorPool.getVector(),VectorPool.getVector()];
-    //   var Icm:Vector[] = vpool.getVector(3); // group inertia tensor //[VectorPool.getVector(),VectorPool.getVector(),VectorPool.getVector()];
-      
-    //   var nAtoms = xyz.length;
-    //   var m0: number;
-
-    //   for (var i=0; i<nAtoms; i++) {
-    //     m0 = masses[i];
-    //     // linear momentum
-    //     Vector.omult(vel[i], m0, p0);
-    //     gp.iadd(p0);
-        
-    //     // angular momentum
-    //     Vector.ocross(xyz[i], vel[i], j0);
-    //     j0.imult(m0);
-    //     gj.iadd(j0);
-    //     gx.set(gx.x + m0*xyz[i].x, gx.y + m0*xyz[i].y, gx.z + m0*xyz[i].z);
-    //     this.update_tensor(xyz[i], m0, gi);
-    //   }
-      
-    //   var M = masses.reduce((a, b) => a + b, 0);
-    //   Vector.omult(gp, 1.0/M, gv);
-
-    //   // calculate group center of mass
-    //   gx.imult(1.0/M);
-
-    //   // Subtract the center of mass contribution to the angular momentum
-    //   var jcm: Vector = VectorPool.getVector();
-    //   Vector.ocross(gx, gv, jcm);
-    //   jcm.imult(M);
-    //   gj.isub(jcm);
-
-    //   // Subtract the center of mass contribution from the inertia tensor
-    //   this.update_tensor(gx, M, Icm);
-    //   for(var i=0; i<3; i++)
-    //     gi[i].isub(Icm[i]);
-
-    //   /* Compute angular velocity, using matrix operation 
-    //   * Since J = I w
-    //   * we have
-    //   * w = I^-1 J
-    //   */
-    //   this.get_minv(gi,Icm);
-    //   gw.set(Icm[0].dot(gj), Icm[1].dot(gj), Icm[2].dot(gj));
-
-    //   /* Compute the correction to the velocity for each atom */
-    //   for (var i=0; i<nAtoms; i++) {
-    //     vel[i].isub(gv);
-    //     Vector.osub(xyz[i], gx, dx);
-    //     Vector.ocross(gw, dx, dv);
-    //     vel[i].isub(dv);
-    //   }
-
-    //   vpool.collect();  // collect all vectors from this pool
-    //   vpool.free();     // release this pool
-    // }
 
     remove(xyz: Vector[], vel: Vector[], masses: number[]) {
       var p0: Vector = VectorPool.getVector();    // single particle linear momentum

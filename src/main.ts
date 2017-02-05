@@ -8,7 +8,7 @@ var fs = require('fs');
 var xmlrpc = require('xmlrpc');
 
 
-var params = fs.readFileSync('params/ffdat.js', 'utf8');
+var params = fs.readFileSync('data/dimethylimidazole_ff.json', 'utf8');
 var client = xmlrpc.createClient({
   host: 'localhost',
   path: '/RPC2',
@@ -26,7 +26,7 @@ var client = xmlrpc.createClient({
 // }
 
 
-var fname = 'dat/tmp.xyz';
+var fname = 'data/trj.xyz';
 var notify = function(data: string) {
   fs.appendFileSync(fname, data);
 }
@@ -35,7 +35,7 @@ var notify = function(data: string) {
 var mm = new MolecularMechanics.System();
 mm.loadParamsFromJSON(JSON.parse(params));
 
-var ab: string[] = fs.readFileSync('params/ab.xyz', 'utf8').split('\n');
+var ab: string[] = fs.readFileSync('data/dimethylimidazole.xyz', 'utf8').split('\n');
 //console.log(ab);
 
 
